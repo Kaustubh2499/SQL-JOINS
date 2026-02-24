@@ -1,0 +1,222 @@
+SQL SERVER JOIN NOTES
+=====================
+
+A JOIN combines rows from two or more tables based on a related column.
+
+
+-----------------------------------------------------------------------
+SAMPLE TABLES
+-----------------------------------------------------------------------
+
+Customers Table:
+  CustomerID | Name
+  -----------|---------
+  1          | Arjun
+  2          | Priya
+  3          | Ravi
+  4          | Sneha
+
+Orders Table:
+  OrderID | CustomerID | Amount
+  --------|------------|-------
+  101     | 1          | 250
+  102     | 1          | 400
+  103     | 2          | 150
+  104     | 99         | 300   <-- no matching customer
+
+
+-----------------------------------------------------------------------
+1. INNER JOIN
+-----------------------------------------------------------------------
+
+Meaning: Return only rows that have a match in BOTH tables.
+
+Query:
+  SELECT c.Name, o.OrderID, o.Amount
+  FROM Customers c
+  INNER JOIN Orders o ON c.CustomerID = o.CustomerID;
+
+Result:
+  Name  | OrderID | Amount
+  ------|---------|-------
+  Arjun | 101     | 250
+  Arjun | 102     | 400
+  Priya | 103     | 150
+
+Note: Ravi and Sneha (no orders) and OrderID 104 (no customer) are excluded.
+
+
+-----------------------------------------------------------------------
+2. LEFT JOIN
+-----------------------------------------------------------------------
+
+Meaning: Return ALL rows from the left table.
+         If there is no match on the right side, show NULL.
+
+Query:
+  SELECT c.Name, o.OrderID, o.Amount
+  FROM Customers c
+  LEFT JOIN Orders o ON c.CustomerID = o.CustomerID;
+
+Result:
+  Name  | OrderID | Amount
+  ------|---------|-------
+  Arjun | 101     | 250
+  Arjun | 102     | 400
+  Priya | 103     | 150
+  Ravi  | NULL    | NULL
+  Sneha | NULL    | NULL
+
+Note: All customers appear. Ravi and Sneha have no orders so they show NULL.
+
+Tip - Find customers with NO orders at all:
+  SELECT c.Name
+  FROM Customers c
+  LEFT JOIN Orders o ON c.CustomerID = o.CustomerID
+  WHERE o.OrderID IS NULL;
+  --> Returns: Ravi, Sneha
+
+
+-----------------------------------------------------------------------
+3. RIGHT JOIN
+-----------------------------------------------------------------------
+
+Meaning: Return ALL rows from the right table.
+         If there is no match on the left side, show NULL.
+
+Query:
+  SELECT c.Name, o.OrderID, o.Amount
+  FROM Customers c
+  RIGHT JOIN Orders o ON c.CustomerID = o.CustomerID;
+
+Result:
+  Name  | OrderID | Amount
+  ------|---------|-------
+  Arjun | 101     | 250
+  Arjun | 102     | 400
+  Priya | 103     | 150
+  NULL  | 104     | 300
+
+Note: All orders appear. OrderID 104 has no customer, so Name is NULL.
+
+Tip: RIGHT JOIN is rarely used. Most developers just flip the tables
+     and use LEFT JOIN instead.
+
+
+-----------------------------------------------------------------------
+4. FULL OUTER JOIN
+-----------------------------------------------------------------------
+
+Meaning: Return ALL rows from BOTH tables.
+         Show NULL wherever there is no match on either side.
+
+Query:
+  SELECT c.Name, o.OrderID, o.Amount
+  FROM Customers c
+  FULL OUTER JOIN Orders o ON c.CustomerID = o.CustomerID;
+
+Result:
+  Name  | OrderID | Amount
+  ------|---------|-------
+  Arjun | 101     | 250
+  Arjun | 102     | 400
+  Priya | 103     | 150
+  Ravi  | NULL    | NULL
+  Sneha | NULL    | NULL
+  NULL  | 104     | 300
+
+Note: Nobody gets left out. NULLs appear wherever there is no match.
+
+
+-----------------------------------------------------------------------
+5. CROSS JOIN
+-----------------------------------------------------------------------
+
+Meaning: Return every possible combination of rows from both tables.
+         No ON clause is needed.
+
+Query:
+  SELECT c.Name, o.OrderID
+  FROM Customers c
+  CROSS JOIN Orders o;
+
+Result: 4 customers x 4 orders = 16 rows total.
+
+Warning: Use carefully. Large tables will produce massive results very fast.
+
+
+-----------------------------------------------------------------------
+6. SELF JOIN
+-----------------------------------------------------------------------
+
+Meaning: Join a table to itself.
+         Useful for hierarchies like employees and their managers.
+
+Employees Table:
+  EmployeeID | Name      | ManagerID
+  -----------|-----------|----------
+  1          | Vikram    | NULL
+  2          | Anita     | 1
+  3          | Rohit     | 1
+  4          | Deepika   | 2
+
+Query:
+  SELECT e.Name AS Employee, m.Name AS Manager
+  FROM Employees e
+  LEFT JOIN Employees m ON e.ManagerID = m.EmployeeID;
+
+Result:
+  Employee | Manager
+  ---------|--------
+  Vikram   | NULL
+  Anita    | Vikram
+  Rohit    | Vikram
+  Deepika  | Anita
+
+Note: Same table, two aliases (e and m) to tell the two copies apart.
+
+
+-----------------------------------------------------------------------
+COMMON MISTAKE - LEFT JOIN with WHERE filter
+-----------------------------------------------------------------------
+
+Putting a WHERE filter on the right table column accidentally turns
+a LEFT JOIN into an INNER JOIN, removing your NULL rows.
+
+WRONG:
+  SELECT c.Name, o.Amount
+  FROM Customers c
+  LEFT JOIN Orders o ON c.CustomerID = o.CustomerID
+  WHERE o.Amount > 100;
+  --> Ravi and Sneha disappear because NULL > 100 is false.
+
+CORRECT - move the filter into the ON clause:
+  SELECT c.Name, o.Amount
+  FROM Customers c
+  LEFT JOIN Orders o
+    ON c.CustomerID = o.CustomerID
+    AND o.Amount > 100;
+  --> Ravi and Sneha still appear, with NULL in the Amount column.
+
+
+-----------------------------------------------------------------------
+QUICK REFERENCE
+-----------------------------------------------------------------------
+
+  JOIN Type        What it returns
+  ---------------  ---------------------------------------------
+  INNER JOIN       Rows that match in BOTH tables
+  LEFT JOIN        ALL left rows + matching right rows
+  RIGHT JOIN       ALL right rows + matching left rows
+  FULL OUTER JOIN  ALL rows from both tables
+  CROSS JOIN       Every combination of rows (no ON clause)
+  SELF JOIN        Table joined to itself (use two aliases)
+
+
+-----------------------------------------------------------------------
+VISUAL SUMMARY
+-----------------------------------------------------------------------
+
+  INNER JOIN       LEFT JOIN        RIGHT JOIN       FULL OUTER JOIN
+  Only matches     All left         All right        Everything
+  [ (match) ]      [LEFT(match) ]   [ (match)RIGHT]  [LEFT(match)RIGHT]
