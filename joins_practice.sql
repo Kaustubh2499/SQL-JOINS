@@ -1,16 +1,3 @@
---- Find departments where: Headcount > 5 , Total payroll > 80,000, Average salary > 3,000
-
-SELECT department_id, 
-COUNT(*) as total_count, 
-SUM(salary) as total_salary, 
-CAST(AVG(salary) as decimal (10,2)) as avg_salary
-FROM employeesjoin
-where department_id IS NOT NULL
-group by department_id
-having COUNT(*) > 5
-AND SUM(salary) > 80000
-AND CAST(AVG(salary) as decimal (10,2)) > 3000
-
 --- Find employees who have no department ---
 
 SELECT e.employee_id, e.first_name, e.last_name, e.department_id FROM employeesjoin e
@@ -84,3 +71,15 @@ FROM sales_ranking
 SELECT * FROM best_sales_rank
 WHERE best_ranking = 1
 
+--- Find departments where: Headcount > 5 , Total payroll > 80,000, Average salary > 3,000
+
+SELECT department_id, 
+COUNT(*) as total_count, 
+SUM(salary) as total_salary, 
+CAST(AVG(salary) as decimal (10,2)) as avg_salary
+FROM employeesjoin
+where department_id IS NOT NULL
+group by department_id
+having COUNT(*) > 5
+AND SUM(salary) > 80000
+AND CAST(AVG(salary) as decimal (10,2)) > 3000
